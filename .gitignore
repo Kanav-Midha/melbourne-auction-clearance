@@ -1,0 +1,29 @@
+# Data: raw extracts are regenerated with `make data`, never committed.
+data/raw/*
+data/interim/*
+data/processed/*
+!data/**/.gitkeep
+
+# Trained artefacts are reproducible from `make train`.
+models/*
+!models/.gitkeep
+!models/best_params.json
+
+# Reports are regenerated, but metrics.json is kept so the README table has a source.
+reports/figures/*
+!reports/figures/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+.venv/
+venv/
+env/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
