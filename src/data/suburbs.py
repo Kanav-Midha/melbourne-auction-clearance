@@ -1,0 +1,123 @@
+"""Static Melbourne suburb reference table.
+
+Coordinates are suburb centroids (approximate, WGS84). `price_tier` is a coarse
+relative level used only to seed the synthetic generator -- the model never
+sees it.
+"""
+from __future__ import annotations
+
+import pandas as pd
+
+# name, lat, lon, council_area, region_name, price_tier (1 low - 5 high)
+_SUBURBS: list[tuple] = [
+    ("Carlton", -37.8001, 144.9670, "Melbourne", "Inner Melbourne", 4),
+    ("Fitzroy", -37.7986, 144.9784, "Yarra", "Inner Melbourne", 5),
+    ("Collingwood", -37.8016, 144.9880, "Yarra", "Inner Melbourne", 4),
+    ("Richmond", -37.8183, 145.0000, "Yarra", "Inner Melbourne", 5),
+    ("South Yarra", -37.8397, 144.9925, "Stonnington", "Inner South", 5),
+    ("Prahran", -37.8514, 144.9931, "Stonnington", "Inner South", 5),
+    ("Windsor", -37.8556, 144.9905, "Stonnington", "Inner South", 4),
+    ("St Kilda", -37.8678, 144.9810, "Port Phillip", "Inner South", 4),
+    ("Elwood", -37.8810, 144.9810, "Port Phillip", "Inner South", 5),
+    ("Albert Park", -37.8420, 144.9540, "Port Phillip", "Inner South", 5),
+    ("South Melbourne", -37.8330, 144.9560, "Port Phillip", "Inner Melbourne", 5),
+    ("Port Melbourne", -37.8400, 144.9400, "Port Phillip", "Inner Melbourne", 5),
+    ("Docklands", -37.8150, 144.9460, "Melbourne", "Inner Melbourne", 3),
+    ("North Melbourne", -37.8000, 144.9430, "Melbourne", "Inner Melbourne", 4),
+    ("Parkville", -37.7850, 144.9520, "Melbourne", "Inner Melbourne", 5),
+    ("Brunswick", -37.7670, 144.9597, "Merri-bek", "Northern Metropolitan", 4),
+    ("Coburg", -37.7440, 144.9640, "Merri-bek", "Northern Metropolitan", 3),
+    ("Pascoe Vale", -37.7270, 144.9370, "Merri-bek", "Northern Metropolitan", 3),
+    ("Glenroy", -37.7030, 144.9160, "Merri-bek", "Northern Metropolitan", 2),
+    ("Northcote", -37.7699, 144.9998, "Darebin", "Northern Metropolitan", 4),
+    ("Thornbury", -37.7570, 145.0000, "Darebin", "Northern Metropolitan", 4),
+    ("Preston", -37.7404, 145.0079, "Darebin", "Northern Metropolitan", 3),
+    ("Reservoir", -37.7170, 145.0070, "Darebin", "Northern Metropolitan", 2),
+    ("Thomastown", -37.6830, 145.0130, "Whittlesea", "Northern Metropolitan", 2),
+    ("Epping", -37.6510, 145.0230, "Whittlesea", "Northern Metropolitan", 2),
+    ("Mill Park", -37.6600, 145.0680, "Whittlesea", "Northern Metropolitan", 2),
+    ("Craigieburn", -37.5960, 144.9400, "Hume", "Northern Metropolitan", 1),
+    ("Broadmeadows", -37.6830, 144.9190, "Hume", "Northern Metropolitan", 1),
+    ("Bundoora", -37.7000, 145.0670, "Banyule", "Northern Metropolitan", 2),
+    ("Heidelberg", -37.7540, 145.0620, "Banyule", "Northern Metropolitan", 3),
+    ("Ivanhoe", -37.7690, 145.0430, "Banyule", "Northern Metropolitan", 4),
+    ("Greensborough", -37.7030, 145.1020, "Banyule", "Northern Metropolitan", 3),
+    ("Eltham", -37.7150, 145.1480, "Nillumbik", "Northern Metropolitan", 3),
+    ("Essendon", -37.7530, 144.9080, "Moonee Valley", "Western Metropolitan", 4),
+    ("Moonee Ponds", -37.7650, 144.9190, "Moonee Valley", "Western Metropolitan", 4),
+    ("Ascot Vale", -37.7760, 144.9170, "Moonee Valley", "Western Metropolitan", 4),
+    ("Flemington", -37.7870, 144.9260, "Melbourne", "Western Metropolitan", 3),
+    ("Niddrie", -37.7420, 144.8880, "Moonee Valley", "Western Metropolitan", 3),
+    ("Airport West", -37.7200, 144.8830, "Moonee Valley", "Western Metropolitan", 3),
+    ("Keilor East", -37.7350, 144.8650, "Brimbank", "Western Metropolitan", 2),
+    ("Footscray", -37.7996, 144.8996, "Maribyrnong", "Western Metropolitan", 3),
+    ("Yarraville", -37.8155, 144.8898, "Maribyrnong", "Western Metropolitan", 4),
+    ("Maribyrnong", -37.7720, 144.8880, "Maribyrnong", "Western Metropolitan", 3),
+    ("Williamstown", -37.8608, 144.8975, "Hobsons Bay", "Western Metropolitan", 4),
+    ("Altona", -37.8687, 144.8306, "Hobsons Bay", "Western Metropolitan", 3),
+    ("Sunshine", -37.7880, 144.8320, "Brimbank", "Western Metropolitan", 2),
+    ("St Albans", -37.7450, 144.8000, "Brimbank", "Western Metropolitan", 1),
+    ("Caroline Springs", -37.7400, 144.7400, "Melton", "Western Metropolitan", 2),
+    ("Melton", -37.6830, 144.5850, "Melton", "Western Metropolitan", 1),
+    ("Werribee", -37.9000, 144.6600, "Wyndham", "Western Metropolitan", 1),
+    ("Point Cook", -37.9140, 144.7500, "Wyndham", "Western Metropolitan", 2),
+    ("Hoppers Crossing", -37.8820, 144.7000, "Wyndham", "Western Metropolitan", 1),
+    ("Kew", -37.8060, 145.0300, "Boroondara", "Inner East", 5),
+    ("Hawthorn", -37.8220, 145.0230, "Boroondara", "Inner East", 5),
+    ("Camberwell", -37.8420, 145.0680, "Boroondara", "Inner East", 5),
+    ("Balwyn", -37.8100, 145.0800, "Boroondara", "Inner East", 5),
+    ("Glen Iris", -37.8580, 145.0610, "Stonnington", "Inner East", 5),
+    ("Malvern", -37.8580, 145.0280, "Stonnington", "Inner East", 5),
+    ("Armadale", -37.8560, 145.0190, "Stonnington", "Inner East", 5),
+    ("Toorak", -37.8410, 145.0130, "Stonnington", "Inner East", 5),
+    ("Caulfield", -37.8810, 145.0230, "Glen Eira", "Inner South", 4),
+    ("Carnegie", -37.8880, 145.0550, "Glen Eira", "Inner South", 4),
+    ("Murrumbeena", -37.8940, 145.0670, "Glen Eira", "Inner South", 3),
+    ("Bentleigh", -37.9180, 145.0360, "Glen Eira", "Inner South", 4),
+    ("Brighton", -37.9060, 144.9980, "Bayside", "Inner South", 5),
+    ("Hampton", -37.9370, 145.0000, "Bayside", "Inner South", 5),
+    ("Sandringham", -37.9510, 145.0080, "Bayside", "Inner South", 5),
+    ("Beaumaris", -37.9820, 145.0400, "Bayside", "Inner South", 4),
+    ("Cheltenham", -37.9650, 145.0560, "Kingston", "South-Eastern Metropolitan", 3),
+    ("Mentone", -37.9830, 145.0650, "Kingston", "South-Eastern Metropolitan", 3),
+    ("Mordialloc", -38.0050, 145.0880, "Kingston", "South-Eastern Metropolitan", 3),
+    ("Chelsea", -38.0520, 145.1170, "Kingston", "South-Eastern Metropolitan", 2),
+    ("Box Hill", -37.8190, 145.1220, "Whitehorse", "Eastern Metropolitan", 4),
+    ("Blackburn", -37.8190, 145.1500, "Whitehorse", "Eastern Metropolitan", 4),
+    ("Nunawading", -37.8200, 145.1720, "Whitehorse", "Eastern Metropolitan", 3),
+    ("Burwood", -37.8500, 145.1150, "Whitehorse", "Eastern Metropolitan", 4),
+    ("Doncaster", -37.7870, 145.1250, "Manningham", "Eastern Metropolitan", 4),
+    ("Mount Waverley", -37.8770, 145.1290, "Monash", "Eastern Metropolitan", 4),
+    ("Glen Waverley", -37.8800, 145.1650, "Monash", "Eastern Metropolitan", 4),
+    ("Wheelers Hill", -37.9070, 145.1810, "Monash", "Eastern Metropolitan", 3),
+    ("Clayton", -37.9240, 145.1200, "Monash", "Eastern Metropolitan", 3),
+    ("Oakleigh", -37.8990, 145.0890, "Monash", "Eastern Metropolitan", 3),
+    ("Chadstone", -37.8850, 145.0850, "Monash", "Eastern Metropolitan", 3),
+    ("Vermont", -37.8340, 145.1930, "Whitehorse", "Eastern Metropolitan", 3),
+    ("Ringwood", -37.8140, 145.2290, "Maroondah", "Outer Eastern", 3),
+    ("Croydon", -37.7950, 145.2810, "Maroondah", "Outer Eastern", 2),
+    ("Lilydale", -37.7560, 145.3480, "Yarra Ranges", "Outer Eastern", 2),
+    ("Bayswater", -37.8420, 145.2660, "Knox", "Outer Eastern", 2),
+    ("Boronia", -37.8620, 145.2830, "Knox", "Outer Eastern", 2),
+    ("Wantirna", -37.8550, 145.2200, "Knox", "Outer Eastern", 3),
+    ("Rowville", -37.9280, 145.2330, "Knox", "Outer Eastern", 3),
+    ("Springvale", -37.9500, 145.1520, "Greater Dandenong", "South-Eastern Metropolitan", 2),
+    ("Dandenong", -37.9870, 145.2140, "Greater Dandenong", "South-Eastern Metropolitan", 1),
+    ("Narre Warren", -38.0270, 145.3040, "Casey", "South-Eastern Metropolitan", 2),
+    ("Berwick", -38.0350, 145.3450, "Casey", "South-Eastern Metropolitan", 3),
+    ("Pakenham", -38.0700, 145.4850, "Cardinia", "South-Eastern Metropolitan", 1),
+    ("Cranbourne", -38.1100, 145.2830, "Casey", "South-Eastern Metropolitan", 1),
+    ("Carrum Downs", -38.0950, 145.1750, "Frankston", "South-Eastern Metropolitan", 1),
+    ("Seaford", -38.1020, 145.1280, "Frankston", "South-Eastern Metropolitan", 2),
+    ("Frankston", -38.1440, 145.1230, "Frankston", "South-Eastern Metropolitan", 2),
+]
+
+COLUMNS = ["suburb", "lat", "lon", "council_area", "region_name", "price_tier"]
+
+
+def suburb_table() -> pd.DataFrame:
+    """Return the suburb reference table as a DataFrame."""
+    return pd.DataFrame(_SUBURBS, columns=COLUMNS)
+
+
+__all__ = ["suburb_table", "COLUMNS"]
