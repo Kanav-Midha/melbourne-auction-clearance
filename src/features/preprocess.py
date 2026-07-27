@@ -103,7 +103,7 @@ def _trailing_rate(df: pd.DataFrame, key: str, window: str) -> pd.Series:
     pieces = []
     for name, grp in daily.groupby(key, sort=False):
         g = grp.set_index("auction_date")
-        roll = g[["sold", "held"]].rolling(window).sum()
+        roll = g[["sold", "held"]].rolling(window, closed="left").sum()
         rate = (roll["sold"] / roll["held"]).rename("rate")
         pieces.append(rate.reset_index().assign(**{key: name}))
 
@@ -130,7 +130,7 @@ def _trailing_median_price(df: pd.DataFrame, window: str) -> pd.Series:
     pieces = []
     for name, grp in daily.groupby("suburb", sort=False):
         g = grp.set_index("auction_date")
-        med = g["sold_price"].rolling(window).median().rename("med")
+        med = g["sold_price"].rolling(window, closed="left").median().rename("med")
         pieces.append(med.reset_index().assign(suburb=name))
 
     trailing = pd.concat(pieces, ignore_index=True)
