@@ -36,12 +36,21 @@ FIXED = {
     "verbosity": -1,
     "n_jobs": -1,
     "seed": config.RANDOM_SEED,
+    # Required because the Dataset is constructed once and reused across trials
+    # that vary min_child_samples. With the default (True), LightGBM pre-filters
+    # features using the first trial's threshold and then hard-errors on any
+    # later trial that lowers it -- which silently killed 6 of the first 40
+    # trials before this was set.
+    "feature_pre_filter": False,
 }
 
 
 def suggest(trial: optuna.Trial) -> dict:
     """The search space.
 
+    The ranges are deliberately conservative. A wider first pass (up to 192
+    leaves and depth 10) found a 510-round model that hit 0.76 train AUC and
+    0.63 validation -- it had memorised ``suburb`` rather than learned anything.
     ``num_leaves`` and ``min_child_samples`` are the two that actually move the
     needle here; the rest mostly trade a little variance. ``max_cat_to_onehot``
     is pinned low so LightGBM uses its sorted-category split for ``suburb``
@@ -50,9 +59,9 @@ def suggest(trial: optuna.Trial) -> dict:
     return {
         **FIXED,
         "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.12, log=True),
-        "num_leaves": trial.suggest_int("num_leaves", 16, 192, log=True),
-        "max_depth": trial.suggest_int("max_depth", 3, 10),
-        "min_child_samples": trial.suggest_int("min_child_samples", 20, 300, log=True),
+        "num_leaves": trial.suggest_int("num_leaves", 8, 64, log=True),
+        "max_depth": trial.suggest_int("max_depth", 3, 8),
+        "min_child_samples": trial.suggest_int("min_child_samples", 40, 600, log=True),
         "feature_fraction": trial.suggest_float("feature_fraction", 0.5, 1.0),
         "bagging_fraction": trial.suggest_float("bagging_fraction", 0.6, 1.0),
         "bagging_freq": trial.suggest_int("bagging_freq", 1, 7),
