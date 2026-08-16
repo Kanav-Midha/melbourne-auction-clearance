@@ -1,0 +1,26 @@
+{
+  "params": {
+    "objective": "binary",
+    "metric": "average_precision",
+    "boosting_type": "gbdt",
+    "verbosity": -1,
+    "n_jobs": -1,
+    "seed": 42,
+    "feature_pre_filter": false,
+    "learning_rate": 0.0207919902835381,
+    "num_leaves": 44,
+    "max_depth": 8,
+    "min_child_samples": 132,
+    "feature_fraction": 0.8403019656094707,
+    "bagging_fraction": 0.6811450109399032,
+    "bagging_freq": 4,
+    "lambda_l1": 1.0135980563030897,
+    "lambda_l2": 0.001380591649477437,
+    "min_split_gain": 0.26414685875905725,
+    "cat_smooth": 90,
+    "max_cat_to_onehot": 4
+  },
+  "best_iteration": 92,
+  "valid_pr_auc": 0.73509,
+  "n_trials": 80
+}
