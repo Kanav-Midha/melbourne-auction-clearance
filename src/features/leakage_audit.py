@@ -143,44 +143,74 @@ def check_single_feature_auc(df: pd.DataFrame, target: str,
 
 
 def check_temporal_integrity(auctions: pd.DataFrame, stations: pd.DataFrame,
-                             weather: pd.DataFrame, cutoff: str = "2022-01-01",
+                             weather: pd.DataFrame, cutoff: str = "2022-06-04",
                              columns: tuple[str, ...] = (
                                  "suburb_clearance_l4w",
                                  "region_clearance_l4w",
                                  "suburb_median_price_l90d",
-                             )) -> list[Finding]:
-    """Rebuild features on a truncated history and require identical values.
+                             ),
+                             seed: int = 0) -> list[Finding]:
+    """Permute future outcomes and require past features to be unchanged.
 
-    If a trailing feature only uses the past, then computing it over
-    ``df[date < cutoff]`` must give exactly the same values for those rows as
-    computing it over the full dataset. If a future-looking aggregate has crept
-    back in, the two disagree.
+    A feature is causal at date *t* if it depends only on outcomes recorded
+    strictly before *t*. That gives a property which is cheap to test:
+
+        Scramble every outcome on or after a cutoff date D.
+        Rebuild the features.
+        Every row with auction_date <= D must be bit-identical.
+
+    Rows at exactly D are the interesting ones. Their features may use history
+    up to but not including D, so scrambling D itself must not move them. A
+    window that includes the current day fails here immediately.
+
+    Rows after D are excluded from the comparison: their history legitimately
+    contains the scrambled region, so they are *expected* to change.
+
+    Why not simply rebuild on a truncated history?
+        That was the first version of this check, and it did not work. Removing
+        all rows on or after D cannot detect a window that reaches only as far
+        as the current day, because for any row before D that window never
+        touched the removed region. It passed cleanly on the exact bug it was
+        written to catch. The permutation form catches both same-day and
+        future-reaching leakage.
+
+    Both the target and ``sold_price`` are scrambled, since features derive from
+    each.
     """
     from src.features.preprocess import build_features
 
-    full = build_features(auctions, stations, weather)
-    truncated = build_features(
-        auctions[auctions["auction_date"] < cutoff].copy(), stations, weather
-    )
+    cut = pd.Timestamp(cutoff)
+    baseline = build_features(auctions, stations, weather)
 
-    key = ["listing_id"]
-    merged = full[key + list(columns)].merge(
-        truncated[key + list(columns)], on=key, how="inner", suffixes=("_full", "_trunc")
+    rng = np.random.default_rng(seed)
+    scrambled = auctions.copy()
+    future = scrambled["auction_date"] >= cut
+    idx = scrambled.index[future].to_numpy()
+    shuffled = rng.permutation(idx)
+    for col in (config.TARGET, "sold_price"):
+        if col in scrambled.columns:
+            scrambled.loc[idx, col] = scrambled.loc[shuffled, col].to_numpy()
+
+    perturbed = build_features(scrambled, stations, weather)
+
+    key = "listing_id"
+    past = baseline.loc[baseline["auction_date"] <= cut, [key] + list(columns)]
+    merged = past.merge(
+        perturbed[[key] + list(columns)], on=key, how="inner", suffixes=("_base", "_perm")
     )
 
     out = []
     for col in columns:
-        a = merged[f"{col}_full"].to_numpy(dtype=float)
-        b = merged[f"{col}_trunc"].to_numpy(dtype=float)
-        both_nan = np.isnan(a) & np.isnan(b)
-        diff = ~(np.isclose(a, b, rtol=1e-9, atol=1e-9, equal_nan=True) | both_nan)
-        n_diff = int(diff.sum())
+        a = merged[f"{col}_base"].to_numpy(dtype=float)
+        b = merged[f"{col}_perm"].to_numpy(dtype=float)
+        same = np.isclose(a, b, rtol=1e-9, atol=1e-9) | (np.isnan(a) & np.isnan(b))
+        n_diff = int((~same).sum())
         if n_diff:
-            worst = float(np.nanmax(np.abs(a[diff] - b[diff]))) if n_diff else 0.0
+            worst = float(np.nanmax(np.abs(a[~same] - b[~same])))
             out.append(Finding(
                 "temporal", col,
-                f"{n_diff}/{len(merged)} rows change when the future is removed "
-                f"(max delta {worst:.4g})",
+                f"{n_diff}/{len(merged)} rows on or before {cut.date()} change when "
+                f"outcomes from {cut.date()} onward are scrambled (max delta {worst:.4g})",
             ))
     return out
 
