@@ -1,0 +1,33 @@
+{
+  "baseline_reference": "see reports/metrics_baseline.json",
+  "train": {
+    "n": 29678,
+    "base_rate": 0.71167,
+    "roc_auc": 0.74504,
+    "pr_auc": 0.86613,
+    "brier": 0.17528,
+    "log_loss": 0.52946,
+    "ece": 0.05111,
+    "lift_top_decile": 1.31708
+  },
+  "valid": {
+    "n": 8134,
+    "base_rate": 0.6029,
+    "roc_auc": 0.66255,
+    "pr_auc": 0.73509,
+    "brier": 0.22509,
+    "log_loss": 0.64096,
+    "ece": 0.0588,
+    "lift_top_decile": 1.35911
+  },
+  "test": {
+    "n": 8547,
+    "base_rate": 0.6972,
+    "roc_auc": 0.67328,
+    "pr_auc": 0.80357,
+    "brier": 0.19331,
+    "log_loss": 0.57213,
+    "ece": 0.02566,
+    "lift_top_decile": 1.20112
+  }
+}

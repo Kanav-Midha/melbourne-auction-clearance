@@ -1,0 +1,32 @@
+{
+  "train": {
+    "n": 29678,
+    "base_rate": 0.71167,
+    "roc_auc": 0.69436,
+    "pr_auc": 0.82847,
+    "brier": 0.1835,
+    "log_loss": 0.54925,
+    "ece": 0.00735,
+    "lift_top_decile": 1.23139
+  },
+  "valid": {
+    "n": 8134,
+    "base_rate": 0.6029,
+    "roc_auc": 0.64593,
+    "pr_auc": 0.71421,
+    "brier": 0.23148,
+    "log_loss": 0.65512,
+    "ece": 0.08236,
+    "lift_top_decile": 1.28372
+  },
+  "test": {
+    "n": 8547,
+    "base_rate": 0.6972,
+    "roc_auc": 0.65885,
+    "pr_auc": 0.79455,
+    "brier": 0.21098,
+    "log_loss": 0.61129,
+    "ece": 0.12106,
+    "lift_top_decile": 1.20615
+  }
+}
