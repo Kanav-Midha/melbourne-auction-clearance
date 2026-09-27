@@ -6,8 +6,6 @@ with the offline one about a column order, a dtype, or a category level.
 """
 from __future__ import annotations
 
-import pytest
-
 from tests.conftest import requires_model
 
 VALID_PAYLOAD = {

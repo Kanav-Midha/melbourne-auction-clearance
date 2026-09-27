@@ -19,6 +19,9 @@ filterwarnings = [
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+# notebooks/01_initial_exploration.ipynb is deliberately untidy -- it is the
+# "before" half of this project's story. Linting it would defeat the point.
+extend-exclude = ["notebooks"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]

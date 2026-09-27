@@ -10,7 +10,6 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-import pandas as pd
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -59,6 +58,7 @@ def features(auctions, stations, weather):
 @pytest.fixture(scope="session")
 def api_client():
     from fastapi.testclient import TestClient
+
     from src.api.main import app
     with TestClient(app) as client:
         yield client

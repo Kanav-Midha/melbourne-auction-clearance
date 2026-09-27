@@ -18,7 +18,6 @@ import json
 import logging
 
 import lightgbm as lgb
-import numpy as np
 import optuna
 from sklearn.metrics import average_precision_score
 

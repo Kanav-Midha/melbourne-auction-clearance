@@ -7,11 +7,9 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from src.data.data_loader import (
     derive_target,
-    load_auctions,
     normalise_suburb,
     parse_currency,
     parse_price_guide,

@@ -472,7 +472,8 @@ def make_auctions(rng: np.random.Generator, subs: pd.DataFrame,
     # Free-text price guide, the way portals publish it.
     df["price_guide"] = [
         f"${lo:,.0f} - ${hi:,.0f}"
-        for lo, hi in zip(df["guide_price_low"].round(-3), df["guide_price_high"].round(-3))
+        for lo, hi in zip(df["guide_price_low"].round(-3), df["guide_price_high"].round(-3),
+                          strict=True)
     ]
     df = df.drop(columns=["guide_price_low", "guide_price_high"])
 
@@ -480,7 +481,7 @@ def make_auctions(rng: np.random.Generator, subs: pd.DataFrame,
     as_text = rng.random(len(df)) < 0.5
     df["sold_price"] = [
         ("" if pd.isna(v) else (f"${v:,.0f}" if t else f"{v:.0f}"))
-        for v, t in zip(df["sold_price"], as_text)
+        for v, t in zip(df["sold_price"], as_text, strict=True)
     ]
 
     # Inconsistent suburb capitalisation and stray whitespace.

@@ -27,7 +27,6 @@ import logging
 from dataclasses import dataclass
 
 import joblib
-import numpy as np
 import pandas as pd
 
 from src import config
