@@ -1,5 +1,9 @@
 # Melbourne Auction Clearance Predictor
 
+[![CI](https://github.com/Kanav-Midha/melbourne-auction-clearance/actions/workflows/ci.yml/badge.svg)](https://github.com/Kanav-Midha/melbourne-auction-clearance/actions/workflows/ci.yml)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 Predicts the probability that a Melbourne residential property **sells under the
 hammer** on a given Saturday, from property attributes, spatial features (CBD and
 PTV train proximity), trailing suburb/region clearance rates, the RBA cash rate,
@@ -40,6 +44,15 @@ below:
 3. **Evaluation must be chronological.** The market regime changes; a random
    split trains on 2024 and tests on 2020.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="reports/figures/clearance_timeline_dark.png">
+  <img alt="Two stacked panels sharing a time axis from 2019 to 2025. The top panel shows Melbourne's monthly auction clearance rate, which sits in the mid-70s through 2021, collapses to around 48 percent during 2022, and recovers to the high 60s by 2024. The line breaks twice in 2020, when on-site auctions were banned during lockdowns. The bottom panel shows the RBA cash rate as a step line, flat near zero until mid-2022 then rising sharply to 4.35 percent. Shading marks the training window, 2019 to 2022, with validation in 2023 and test in 2024." src="reports/figures/clearance_timeline_light.png">
+</picture>
+
+The 2022 collapse is the whole modelling problem in one picture: clearance fell
+from the mid-70s to under 50% as the cash rate went from 0.1% to 3.1%, and any
+model trained without that regime in view will be confidently wrong about it.
+
 ---
 
 ## Results
@@ -77,6 +90,11 @@ support. Predicted vs observed on the 2024 test split:
 
 Full table: [`reports/calibration_test.csv`](reports/calibration_test.csv).
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="reports/figures/calibration_dark.png">
+  <img alt="Predicted versus observed clearance on the 2024 held-out year, with one point per decile of predictions and a dashed 45-degree reference line for perfect calibration. The LightGBM series tracks the reference line closely, with an expected calibration error of 0.026. The logistic regression series sits well above it across the whole range, over-predicting observed clearance by roughly 10 percentage points, with an expected calibration error of 0.121." src="reports/figures/calibration_light.png">
+</picture>
+
 ### What the model uses
 
 | Feature | Gain |
@@ -88,6 +106,11 @@ Full table: [`reports/calibration_test.csv`](reports/calibration_test.csv).
 | `rba_cash_rate_change_3m` | 6.2% |
 | `expected_log_value` | 4.5% |
 | `suburb` | 4.2% |
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="reports/figures/feature_importance_dark.png">
+  <img alt="Horizontal bar chart of the twelve highest-gain features. Trailing four-week regional clearance leads at 27.0 percent of total gain, followed by bedrooms at 15.4 percent and the engineered price_expectation_gap at 7.8 percent. Distance to the nearest train station and the three-month change in the cash rate follow at 6.2 percent each. Suburb, once the dominant feature, now accounts for only 4.2 percent." src="reports/figures/feature_importance_light.png">
+</picture>
 
 Market momentum and interest-rate direction dominate — which matches how the
 Melbourne market actually behaves. The 2022 tightening cycle took clearance from
@@ -320,9 +343,14 @@ src/
 ```
 
 `make audit` is a CI gate over `config.FEATURES`; it exits non-zero on any
-finding. `python -m src.features.leakage_audit --scan-raw` is the discovery
-mode that scans every column, including the post-sale ones the raw extract
-legitimately contains.
+finding, and [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs it on
+every push alongside `ruff` and the test suite on Python 3.11 and 3.12. A second
+job builds the Docker image and smoke-tests `/health` and `/predict` against the
+running container, so the deployment path is verified rather than asserted.
+
+`python -m src.features.leakage_audit --scan-raw` is the discovery mode that
+scans every column, including the post-sale ones the raw extract legitimately
+contains.
 
 ---
 
@@ -352,9 +380,11 @@ make audit      # leakage gate over the feature set; exits 1 on any finding
 make baseline   # logistic regression reference
 make tune       # Optuna search (~3 min, 60 trials)
 make train      # fit + save model, context and metrics
-make test       # 73 tests
+make figures    # regenerate the README figures (light + dark)
+make lint       # ruff
+make test       # 83 tests
 make api        # serve on :8000
 make docker     # multi-stage build; trains in builder, ships a slim runtime
 ```
 
-Requires Python 3.10+.
+Requires Python 3.10+. Licensed under the [MIT License](LICENSE).
