@@ -11,6 +11,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY src/ src/
+# The tuned hyperparameters travel with the source. Without them the build falls
+# back to train.py's defaults, and the image would ship a model that does not
+# match the metrics in the README.
+COPY models/best_params.json models/best_params.json
 RUN python -m src.data.make_dataset --n-auctions 48000 --seed 42 \
  && python -m src.features.leakage_audit \
  && python -m src.models.train --save

@@ -38,8 +38,10 @@ from src.models.tune import PARAMS_PATH
 log = logging.getLogger(__name__)
 
 #: Used when models/best_params.json is absent, so `make train` works on a
-#: fresh clone without a 20-minute search first. These are the tuned values,
-#: checked in as the reproducible default.
+#: fresh clone without a 20-minute search first. These ARE the tuned values --
+#: kept in sync with models/best_params.json by tests/test_models.py, because
+#: a stale copy here silently trains a different model inside the Docker image
+#: (which builds from src/ plus the params file, not from a full checkout).
 DEFAULT_PARAMS = {
     "objective": "binary",
     "metric": "average_precision",
@@ -48,20 +50,20 @@ DEFAULT_PARAMS = {
     "n_jobs": -1,
     "seed": config.RANDOM_SEED,
     "feature_pre_filter": False,
-    "learning_rate": 0.0727,
-    "num_leaves": 151,
-    "max_depth": 3,
-    "min_child_samples": 30,
-    "feature_fraction": 0.5408,
-    "bagging_fraction": 0.7672,
+    "learning_rate": 0.020792,
+    "num_leaves": 44,
+    "max_depth": 8,
+    "min_child_samples": 132,
+    "feature_fraction": 0.840302,
+    "bagging_fraction": 0.681145,
     "bagging_freq": 4,
-    "lambda_l1": 7.75e-05,
-    "lambda_l2": 3.32e-06,
-    "min_split_gain": 0.0,
-    "cat_smooth": 19,
+    "lambda_l1": 1.013598,
+    "lambda_l2": 0.001381,
+    "min_split_gain": 0.264147,
+    "cat_smooth": 90,
     "max_cat_to_onehot": 4,
 }
-DEFAULT_ROUNDS = 105
+DEFAULT_ROUNDS = 92
 
 
 def load_params() -> tuple[dict, int]:
@@ -176,9 +178,10 @@ def main() -> None:
         log.info("saved %s", config.MODEL_PATH)
 
         from src.api.context import build_context_store, save_context
-        from src.features.preprocess import build_features as _bf
-        from src.data.data_loader import load_auctions as _la, load_stations as _ls
+        from src.data.data_loader import load_auctions as _la
+        from src.data.data_loader import load_stations as _ls
         from src.data.weather import build_weather_table as _bw
+        from src.features.preprocess import build_features as _bf
         save_context(build_context_store(_bf(_la(), _ls(), _bw())))
 
         save_metrics(metrics, config.METRICS_PATH)
