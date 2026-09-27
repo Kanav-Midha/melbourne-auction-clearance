@@ -9,9 +9,10 @@ models/*
 !models/.gitkeep
 !models/best_params.json
 
-# Reports are regenerated, but metrics.json is kept so the README table has a source.
-reports/figures/*
-!reports/figures/.gitkeep
+# Reports are regenerated, but metrics.json is kept so the README table has a
+# source, and the figures are committed because the README embeds them -- a
+# regenerated-on-demand image is a broken image on GitHub.
+!reports/figures/*.png
 
 # Python
 __pycache__/

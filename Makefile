@@ -1,4 +1,4 @@
-.PHONY: help setup data audit baseline tune train test api docker clean all
+.PHONY: help setup data audit baseline tune train figures lint test api docker clean all
 
 PY ?= python
 
@@ -10,6 +10,8 @@ help:
 	@echo "make tune      Optuna hyperparameter search (~3 min)"
 	@echo "make train     fit and save the production model"
 	@echo "make test      run the test suite"
+	@echo "make figures   regenerate the README figures"
+	@echo "make lint      ruff check"
 	@echo "make api       serve the model on :8000"
 	@echo "make all       data -> audit -> baseline -> train -> test"
 
@@ -31,6 +33,14 @@ tune:
 train:
 	$(PY) -m src.models.train --save
 
+figures:
+	$(PY) -m src.models.baseline --save
+	$(PY) -m src.models.train --save
+	$(PY) -m src.models.figures
+
+lint:
+	ruff check .
+
 test:
 	$(PY) -m pytest
 
@@ -42,6 +52,7 @@ docker:
 	docker run --rm -p 8000:8000 melbourne-clearance:latest
 
 all: data audit baseline train test
+
 
 clean:
 	rm -rf data/raw/*.csv data/interim/* data/processed/* models/*.joblib
