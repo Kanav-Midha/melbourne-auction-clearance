@@ -72,17 +72,38 @@ jobs:
 
       - name: Smoke-test the served model
         run: |
-          docker run -d --rm -p 8000:8000 --name clearance melbourne-clearance:ci
-          for i in $(seq 1 30); do
+          set -uo pipefail
+          # No --rm: if the container dies we still want its logs.
+          docker run -d -p 8000:8000 --name clearance melbourne-clearance:ci
+
+          for _ in $(seq 1 30); do
             if curl -sf http://localhost:8000/health > /dev/null; then break; fi
+            if [ -z "$(docker ps -q -f name=clearance)" ]; then
+              echo "::error::container exited before serving a request"
+              break
+            fi
             sleep 2
           done
-          curl -sf http://localhost:8000/health | tee /dev/stderr | grep -q '"status":"ok"'
+
+          echo "--- /health ---"
+          curl -sf http://localhost:8000/health | tee /tmp/health.json || true
+          echo
+          grep -q '"status":"ok"' /tmp/health.json
+
+          echo "--- /predict ---"
           curl -sf -X POST http://localhost:8000/predict \
             -H 'Content-Type: application/json' \
             -d '{"suburb":"Northcote","auction_date":"2025-03-15","property_type":"h",
                  "bedrooms":3,"bathrooms":1,"car_spaces":1,"land_size_sqm":372,
                  "building_area_sqm":128,"year_built":1925,
                  "guide_price_low":1480000,"guide_price_high":1620000}' \
-            | tee /dev/stderr | grep -q 'clearance_probability'
-          docker stop clearance
+            | tee /tmp/predict.json
+          echo
+          grep -q 'clearance_probability' /tmp/predict.json
+
+      - name: Container logs
+        if: always()
+        run: |
+          echo "--- docker logs ---"
+          docker logs clearance 2>&1 || echo "(no container)"
+          docker rm -f clearance > /dev/null 2>&1 || true

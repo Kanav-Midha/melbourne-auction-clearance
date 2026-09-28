@@ -33,8 +33,12 @@ RUN pip install --no-cache-dir \
         "lightgbm>=4.3" "pandas>=2.1" "numpy>=1.26" "scikit-learn>=1.4" \
         "joblib>=1.3" "pyarrow>=14.0"
 
-COPY --from=builder /build/models/ models/
-COPY src/ src/
+# Own the working directory before dropping privileges. Without this the
+# COPYs land as root, and the first thing the app does on import -- create its
+# working directories -- fails with PermissionError.
+COPY --from=builder --chown=appuser:appuser /build/models/ models/
+COPY --chown=appuser:appuser src/ src/
+RUN chown appuser:appuser /app
 
 USER appuser
 EXPOSE 8000

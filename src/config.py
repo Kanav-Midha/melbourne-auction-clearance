@@ -32,8 +32,27 @@ MODEL_PATH = MODEL_DIR / "clearance_lgbm.joblib"
 BASELINE_PATH = MODEL_DIR / "clearance_baseline.joblib"
 METRICS_PATH = REPORTS_DIR / "metrics.json"
 
-for _d in (RAW_DIR, INTERIM_DIR, PROCESSED_DIR, MODEL_DIR, REPORTS_DIR, FIGURES_DIR):
-    _d.mkdir(parents=True, exist_ok=True)
+def _ensure_working_dirs() -> None:
+    """Create the working directories, tolerating a filesystem we cannot write.
+
+    Importing this module must never require write access. The serving container
+    ships only ``models/`` and ``src/``, runs as a non-root user, and has no
+    reason to own a ``data/`` directory -- an unconditional ``mkdir`` here raised
+    PermissionError on import and the container died before uvicorn bound a port.
+    The same applies to any read-only root filesystem, which is a normal way to
+    harden a deployment.
+
+    Nothing is silently swallowed: code that actually writes still fails at the
+    point of writing, where the error names the path it wanted.
+    """
+    for d in (RAW_DIR, INTERIM_DIR, PROCESSED_DIR, MODEL_DIR, REPORTS_DIR, FIGURES_DIR):
+        try:
+            d.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            continue
+
+
+_ensure_working_dirs()
 
 # --- Geography ---------------------------------------------------------------
 # Flinders Street Station, the conventional "0km" point for Melbourne distances.
